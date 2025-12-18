@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo Detona Ralph</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Título */
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 4px 4px 0px #000, 8px 8px 0px rgba(255, 107, 107, 0.3);
+            animation: titleBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Container Principal */
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 5px solid #ff6b6b;
+        }
+
+        /* Menu de Informações */
+        .menu {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .menu > div {
+            background: rgba(255, 107, 107, 0.2);
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            border: 3px solid #ff6b6b;
+            min-width: 150px;
+        }
+
+        .menu h2 {
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .menu-time h2:first-child,
+        .menu-score h2:first-child {
+            color: #ffd93d;
+        }
+
+        .menu #time-left,
+        .menu #score {
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .menu-lives {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        /* Painel do Jogo */
+        .panel {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><pattern id="brick" x="0" y="0" width="80" height="40" patternUnits="userSpaceOnUse"><rect width="80" height="40" fill="%23a0522d"/><rect width="38" height="18" x="1" y="1" fill="%23c87533"/><rect width="38" height="18" x="41" y="1" fill="%23b8652d"/><rect width="38" height="18" x="1" y="21" fill="%23b8652d"/><rect width="38" height="18" x="41" y="21" fill="%23c87533"/><path d="M0,0 L80,0 L80,40 L0,40 Z" fill="none" stroke="%23000" stroke-width="1"/><path d="M40,0 L40,40 M0,20 L80,20" stroke="%23000" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="400" height="400" fill="url(%23brick)"/></svg>') center/cover;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: inset 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 5px solid #8b4513;
+        }
+
+        .panel-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .panel-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Quadrados do Jogo */
+        .square {
+            width: 150px;
+            height: 150px;
+            background: rgba(139, 69, 19, 0.6);
+            border: 4px solid #654321;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .square:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .square:active {
+            transform: scale(0.95);
+        }
+
+        /* Ralph aparecendo */
+        .square.enemy {
+            background: url('./imagens/detona-ralph.png') center/cover,
+                        rgba(139, 69, 19, 0.6);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: ralphAppear 0.3s ease-out;
+            border-color: #ff6b6b82;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+        }
+
+        @keyframes ralphAppear {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* Efeito de Hit */
+        .square.hit {
+            animation: hitEffect 0.3s ease-out;
+            background: url('./imagens/ralphpp.png') center/cover,
+                        radial-gradient(circle, #ffd700 0%, #ff6b6b 50%, #00ffff 100%);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 1),
+                        0 0 60px rgba(255, 107, 107, 0.8),
+                        inset 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes hitEffect {
+            0%, 100% {
+                transform: scale(1);
+                filter: brightness(1) saturate(1);
+            }
+            20% {
+                transform: scale(1.4) rotate(15deg);
+                filter: brightness(2) saturate(1.5);
+            }
+            40% {
+                transform: scale(0.8) rotate(-15deg);
+                filter: brightness(2.5) saturate(2);
+            }
+            60% {
+                transform: scale(1.2) rotate(10deg);
+                filter: brightness(2) saturate(1.5);
+            }
+            80% {
+                transform: scale(0.9) rotate(-5deg);
+                filter: brightness(1.5) saturate(1.2);
+            }
+        }
+
+        /* Partículas de explosão ao acertar */
+        @keyframes particle {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .particle {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, #ffd700, #ff6b6b);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle 0.8s ease-out forwards;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        /* Estrelas ao acertar */
+        @keyframes starBurst {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0.5) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .star {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: starBurst 0.8s ease-out forwards;
+        }
+
+        /* Botão de Restart */
+        .restart-btn {
+            display: none;
+            margin: 20px auto;
+            padding: 15px 40px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .restart-btn.show {
+            display: block;
+        }
+
+        /* Game Over */
+        .game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 50px;
+            border-radius: 20px;
+            border: 5px solid #ff6b6b;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .game-over.show {
+            display: block;
+            animation: gameOverAppear 0.5s ease-out;
+        }
+
+        @keyframes gameOverAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .game-over h2 {
+            color: #ff6b6b;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .game-over p {
+            color: white;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .square {
+                width: 100px;
+                height: 100px;
+            }
+
+            .menu {
+                gap: 15px;
+            }
+
+            .menu > div {
+                min-width: 120px;
+                padding: 10px 15px;
+            }
+
+            .menu #time-left,
+            .menu #score {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .square {
+                width: 80px;
+                height: 80px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 DETONA RALPH 🎮</h1>
+
+    <div class="container">
+        <div class="menu">
+            <div class="menu-time">
+                <h2>Time Left</h2>
+                <h2 id="time-left">60</h2>
+            </div>
+            <div class="menu-score">
+                <h2>Your Score</h2>
+                <h2 id="score">0</h2>
+            </div>
+            <div class="menu-lives">
+                <span>❤️</span>
+                <h2 id="lives">x3</h2>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-row">
+                <div class="square" id="1"></div>
+                <div class="square" id="2"></div>
+                <div class="square" id="3"></div>
+            </div>
+            <div class="panel-row">
+                <div class="square" id="4"></div>
+                <div class="square" id="5"></div>
+                <div class="square" id="6"></div>
+            </div>
+            <div class="panel-row">
+                <div class="square" id="7"></div>
+                <div class="square" id="8"></div>
+                <div class="square" id="9"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="restart-btn" id="restart-btn">🔄 RESTART</button>
+
+    <div class="game-over" id="game-over">
+        <h2>GAME OVER!</h2>
+        <p id="final-score">Sua pontuação: 0</p>
+        <button class="restart-btn show" onclick="restartGame()">🔄 JOGAR NOVAMENTE</button>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="hit-sound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE=" type="audio/wav">
+    </audio>
+
+    <script>
+        // Estado do Jogo
+        const state = {
+            view: {
+                squares: document.querySelectorAll('.square'),
+                enemy: null,
+                timeLeft: document.querySelector('#time-left'),
+                score: document.querySelector('#score'),
+                lives: document.querySelector('#lives')
+            },
+            values: {
+                gameVelocity: 1000,
+                hitPosition: 0,
+                result: 0,
+                currentTime: 60,
+                lives: 3
+            },
+            actions: {
+                timerId: null,
+                countDownTimerId: null
+            }
+        };
+
+        // Sons
+        function playSound() {
+            const audio = document.getElementById('hit-sound');
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log('Audio play failed:', e));
+            
+            // Som alternativo usando Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                console.log('Web Audio API failed:', e);
+            }
+        }
+
+        // Mover Ralph para quadrado aleatório
+        function randomSquare() {
+            state.view.squares.forEach(square => {
+                square.classList.remove('enemy');
+            });
+
+            let randomNumber = Math.floor(Math.random() * 9);
+            let randomSquare = state.view.squares[randomNumber];
+            randomSquare.classList.add('enemy');
+            state.values.hitPosition = randomSquare.id;
+        }
+
+        // Timer para mover Ralph
+        function moveEnemy() {
+            state.actions.timerId = setInterval(randomSquare, state.values.gameVelocity);
+        }
+
+        // Adicionar listeners de click
+        function addListenerHitBox() {
+            state.view.squares.forEach(square => {
+                square.addEventListener('mousedown', () => {
+                    if (square.id === state.values.hitPosition) {
+                        // ACERTOU!
+                        state.values.result++;
+                        state.view.score.textContent = state.values.result;
+                        state.values.hitPosition = null;
+                        
+                        // Tocar som
+                        playSound();
+                        
+                        // Adicionar classe hit (mostra Ralph acertado)
+                        square.classList.add('hit');
+                        
+                        // Criar efeito de partículas
+                        createParticles(square);
+                        
+                        // Remover efeito depois
+                        setTimeout(() => {
+                            square.classList.remove('hit');
+                            square.classList.remove('enemy');
+                        }, 300);
+                        
+                    } else {
+                        // ERROU - Penalidade
+                        state.values.lives--;
+                        state.view.lives.textContent = `x${state.values.lives}`;
+                        
+                        // Efeito visual de erro
+                        square.style.background = 'rgba(255, 0, 0, 0.5)';
+                        setTimeout(() => {
+                            square.style.background = '';
+                        }, 200);
+                        
+                        if (state.values.lives <= 0) {
+                            endGame();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Criar efeito de partículas ao acertar
+        function createParticles(square) {
+            const rect = square.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            // Criar partículas circulares
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 120;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                particle.style.cssText = `
+                    left: ${centerX}px;
+                    top: ${centerY}px;
+                    --tx: ${tx}px;
+                    --ty: ${ty}px;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 800);
+            }
+            
+            // Criar estrelas
+            const stars = ['⭐', '✨', '💫', '🌟'];
+            for (let i = 0; i < 4; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.textContent = stars[i];
+                
+                const angle = (i / 4) * Math.PI * 2;
+                const distance = 60;
+                const offsetX = Math.cos(angle) * distance;
+                const offsetY = Math.sin(angle) * distance;
+                
+                star.style.cssText = `
+                    left: ${centerX + offsetX}px;
+                    top: ${centerY + offsetY}px;
+                `;
+                
+                document.body.appendChild(star);
+                
+                setTimeout(() => star.remove(), 800);
+            }
+        }
+
+        // Countdown
+        function countDown() {
+            state.actions.countDownTimerId = setInterval(() => {
+                state.values.currentTime--;
+                state.view.timeLeft.textContent = state.values.currentTime;
+
+                if (state.values.currentTime <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Fim de jogo
+        function endGame() {
+            clearInterval(state.actions.countDownTimerId);
+            clearInterval(state.actions.timerId);
+            
+            document.getElementById('final-score').textContent = `Sua pontuação: ${state.values.result}`;
+            document.getElementById('game-over').classList.add('show');
+            document.getElementById('restart-btn').classList.add('show');
+        }
+
+        // Reiniciar jogo
+        function restartGame() {
+            // Reset valores
+            state.values.currentTime = 60;
+            state.values.result = 0;
+            state.values.lives = 3;
+            
+            // Reset display
+            state.view.timeLeft.textContent = state.values.currentTime;
+            state.view.score.textContent = state.values.result;
+            state.view.lives.textContent = `x${state.values.lives}`;
+            
+            // Esconder game over
+            document.getElementById('game-over').classList.remove('show');
+            document.getElementById('restart-btn').classList.remove('show');
+            
+            // Limpar quadrados
+            state.view.squares.forEach(square => {
+                square.classList.remove('enemy');
+            });
+            
+            // Reiniciar jogo
+            initialize();
+        }
+
+        // Inicializar
+        function initialize() {
+            moveEnemy();
+            countDown();
+        }
+
+        // Iniciar quando carregar
+        window.addEventListener('DOMContentLoaded', () => {
+            addListenerHitBox();
+            initialize();
+        });
+    </script>
+</body>
+</html>
